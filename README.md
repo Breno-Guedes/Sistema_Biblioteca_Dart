@@ -12,6 +12,7 @@ Sistema de gerenciamento de biblioteca desenvolvido em Dart para a disciplina de
 - [Pré-requisitos](#pré-requisitos)
 - [Como Executar](#como-executar)
 - [Tecnologias Utilizadas](#tecnologias-utilizadas)
+- [Autor](#autor)
 
 ---
 
@@ -121,7 +122,9 @@ dart run main.dart
 ## Tecnologias Utilizadas
 
 - Dart
-- Programação para Dispositivos Móveis
 - Programação Orientada a Objetos
 - Estrutura modular de projeto
 - Terminal/Console para interação com o usuário
+
+## Autor
+- **Breno de Souza Guedes**
