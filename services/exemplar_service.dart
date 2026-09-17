@@ -1,11 +1,19 @@
 import '../models/Exemplar.dart';
+import 'storage_service.dart';
 
 class ExemplarService{
+  static const _caminhoDados = 'dados/exemplares.json';
   List<Exemplar> exemplares = [];
-  
-  void adicionarExemplar(Exemplar exemplar){
-    exemplares.add(exemplar);
 
+  Future<void> carregarDados() async {
+    exemplares = await StorageService.carregarDados(_caminhoDados, Exemplar.fromJson);
+  }
+
+  Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, exemplares);
+  
+  Future<void> adicionarExemplar(Exemplar exemplar) async {
+    exemplares.add(exemplar);
+    await salvarDados();
     print("Exemplar com ID ${exemplar.id} adicionado com sucesso!");
   }
 
@@ -42,23 +50,25 @@ class ExemplarService{
     return null;
   }
 
-  void alterarExemplar(int id, int livroId, bool disponivel){
+  Future<void> alterarExemplar(int id, int livroId, bool disponivel) async {
     Exemplar? exemplar = buscarPorId(id);
     if(exemplar == null){
       print("Exemplar com ID $id não encontrado.");
     } else {
       exemplar.livroId = livroId;
       exemplar.disponivel = disponivel;
+      await salvarDados();
       print("Exemplar com ID $id alterado com sucesso!");
     }
   }
 
-  void removerExemplar(int id){
+  Future<void> removerExemplar(int id) async {
     Exemplar? exemplar = buscarPorId(id);
     if(exemplar == null){
       print("Exemplar com ID $id não encontrado.");
     } else {
       exemplares.remove(exemplar);
+      await salvarDados();
       print("Exemplar com ID $id removido com sucesso!");
     }
   }

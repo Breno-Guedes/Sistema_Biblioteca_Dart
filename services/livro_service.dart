@@ -1,11 +1,19 @@
 import '../models/Livro.dart';
+import '../services/storage_service.dart';
 
 class LivroService{
+  static const _caminhoDados = 'dados/livros.json';
   List<Livro> livros = [];
 
-  void adicionarLivro(Livro livro){
-    livros.add(livro);
+  Future<void> carregarDados() async {
+    livros = await StorageService.carregarDados(_caminhoDados, Livro.fromJson);
+  }
 
+  Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, livros);
+
+  Future<void> adicionarLivro(Livro livro) async {
+    livros.add(livro);
+    await salvarDados();
     print("Livro ${livro.titulo} adicionado com sucesso!");
   }
 
@@ -34,7 +42,7 @@ class LivroService{
     return null;
   }
 
-  void alterarLivro(int id, String titulo, String autor, String categoria){
+  Future<void> alterarLivro(int id, String titulo, String autor, String categoria) async {
     Livro? livro = buscarPorId(id);
 
     if(livro == null){
@@ -43,17 +51,19 @@ class LivroService{
       livro.titulo = titulo;
       livro.autor = autor;
       livro.categoria = categoria;
+      await salvarDados();
       print("Livro com ID $id alterado com sucesso!");
     }
   }
 
-  void removerLivro(int id){
+  Future<void> removerLivro(int id) async {
     Livro? livro = buscarPorId(id);
 
     if(livro == null){
       print("Livro com ID $id não encontrado.");
     } else {
       livros.remove(livro);
+      await salvarDados();
       print("Livro com ID $id removido com sucesso!");
     }
   }

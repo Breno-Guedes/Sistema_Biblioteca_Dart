@@ -1,11 +1,19 @@
 import '../models/Reserva.dart';
+import 'storage_service.dart';
 
 class ReservaService{
+  static const _caminhoDados = 'dados/reservas.json';
   List<Reserva> reservas = [];
 
-  void adicionarReserva(Reserva reserva){
-    reservas.add(reserva);
+  Future<void> carregarDados() async {
+    reservas = await StorageService.carregarDados(_caminhoDados, Reserva.fromJson);
+  }
 
+  Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, reservas);
+
+  Future<void> adicionarReserva(Reserva reserva) async {
+    reservas.add(reserva);
+    await salvarDados();
     print("Reserva com ID ${reserva.id} adicionada com sucesso!");
   }
 
@@ -43,22 +51,24 @@ class ReservaService{
     return null;
   }
 
-  void cancelarReserva(int id){
+  Future<void> cancelarReserva(int id) async {
     Reserva? reserva = buscarPorId(id);
     if(reserva == null){
       print("Reserva com ID $id não encontrada.");
     } else {
       reservas.remove(reserva);
+      await salvarDados();
       print("Reserva com ID $id cancelada com sucesso!");
     }
   }
 
-  void removerReserva(int id){
+  Future<void> removerReserva(int id) async {
     Reserva? reserva = buscarPorId(id);
     if(reserva == null){
       print("Reserva com ID $id não encontrada.");
     } else {
       reservas.remove(reserva);
+      await salvarDados();
       print("Reserva com ID $id removida com sucesso!");
     }
   }

@@ -1,11 +1,19 @@
 import '../models/Emprestimo.dart';
+import 'storage_service.dart';
 
   class EmprestimoService{
+    static const _caminhoDados = 'dados/emprestimos.json';
     List<Emprestimo> emprestimos = [];
 
-    void adicionarEmprestimo(Emprestimo emprestimo){
-      emprestimos.add(emprestimo);
+    Future<void> carregarDados() async {
+      emprestimos = await StorageService.carregarDados(_caminhoDados, Emprestimo.fromJson);
+    }
 
+    Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, emprestimos);
+
+    Future<void> adicionarEmprestimo(Emprestimo emprestimo) async {
+      emprestimos.add(emprestimo);
+      await salvarDados();
       print("Empréstimo com ID ${emprestimo.id} adicionado com sucesso!");
     }
 
@@ -44,22 +52,24 @@ import '../models/Emprestimo.dart';
       return null;
     }
 
-    void devolverEmprestimo(int id, DateTime dataDevolucao){
+    Future<void> devolverEmprestimo(int id, DateTime dataDevolucao) async {
       Emprestimo? emprestimo = buscarPorId(id);
       if(emprestimo == null){
         print("Empréstimo com ID $id não encontrado.");
       } else {
         emprestimo.dataDevolucao = dataDevolucao;
+        await salvarDados();
         print("Empréstimo com ID $id devolvido com sucesso!");
       }
     }
 
-    void removerEmprestimo(int id){
+    Future<void> removerEmprestimo(int id) async {
       Emprestimo? emprestimo = buscarPorId(id);
       if(emprestimo == null){
         print("Empréstimo com ID $id não encontrado.");
       } else {
         emprestimos.remove(emprestimo);
+        await salvarDados();
         print("Empréstimo com ID $id removido com sucesso!");
       }
     }

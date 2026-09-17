@@ -13,7 +13,7 @@ import 'services/relatorio_service.dart';
 import 'services/reserva_service.dart';
 import 'services/usuario_service.dart';
 
-void main() {
+Future<void> main() async {
   final usuarios = UsuarioService();
   final livros = LivroService();
   final exemplares = ExemplarService();
@@ -21,6 +21,14 @@ void main() {
   final reservas = ReservaService();
   final relatorios = RelatorioService(livroService: livros, exemplarService: exemplares,
       emprestimoService: emprestimos, reservaService: reservas);
+
+  await Future.wait([
+    usuarios.carregarDados(),
+    livros.carregarDados(),
+    exemplares.carregarDados(),
+    emprestimos.carregarDados(),
+    reservas.carregarDados(),
+  ]);
 
   var opcao = -1;
   while (opcao != 0) {
@@ -31,16 +39,24 @@ void main() {
     ]);
     opcao = lerOpcao();
     switch (opcao) {
-      case 1: menuUsuarios(usuarios); break;
-      case 2: menuLivros(livros); break;
-      case 3: menuExemplares(exemplares); break;
-      case 4: menuEmprestimos(usuarios, exemplares, emprestimos); break;
-      case 5: menuReservas(usuarios, livros, reservas); break;
+      case 1: await menuUsuarios(usuarios); break;
+      case 2: await menuLivros(livros); break;
+      case 3: await menuExemplares(exemplares); break;
+      case 4: await menuEmprestimos(usuarios, exemplares, emprestimos); break;
+      case 5: await menuReservas(usuarios, livros, reservas); break;
       case 6: menuRelatorios(relatorios); break;
       case 0: print('Saindo do sistema...'); break;
       default: print('Opção inválida!');
     }
   }
+
+  await Future.wait([
+    usuarios.salvarDados(),
+    livros.salvarDados(),
+    exemplares.salvarDados(),
+    emprestimos.salvarDados(),
+    reservas.salvarDados(),
+  ]);
 }
 
 void menu(String titulo, List<String> opcoes) {
@@ -57,7 +73,7 @@ int lerOpcao() {
   catch (_) { print('Erro: entrada inválida. Por favor, digite um número.'); return -1; }
 }
 
-void menuUsuarios(UsuarioService service) {
+Future<void> menuUsuarios(UsuarioService service) async {
   var opcao = -1;
   while (opcao != 0) {
     menu('Gerenciar Usuários', const ['1. Adicionar usuário', '2. Listar usuários',
@@ -67,13 +83,13 @@ void menuUsuarios(UsuarioService service) {
     try {
       switch (opcao) {
         case 1:
-          service.adicionarUsuario(Usuario(lerInt('Digite o ID do usuário: '),
+          await service.adicionarUsuario(Usuario(lerInt('Digite o ID do usuário: '),
               lerTexto('Digite o nome do usuário: '), lerTipoUsuario())); break;
         case 2: service.ListarUsuarios(); break;
         case 3:
           final id = lerInt('Digite o ID do usuário a ser alterado: ');
-          service.alterarUsuario(id, lerTexto('Digite o novo nome do usuário: '), lerTipoUsuario()); break;
-        case 4: service.removerUsuario(lerInt('Digite o ID do usuário a ser removido: ')); break;
+          await service.alterarUsuario(id, lerTexto('Digite o novo nome do usuário: '), lerTipoUsuario()); break;
+        case 4: await service.removerUsuario(lerInt('Digite o ID do usuário a ser removido: ')); break;
         case 5: imprimirUsuario(service.buscarPorId(lerInt('Digite o ID do usuário: '))); break;
         case 0: voltar(); break;
         default: print('Opção inválida!');
@@ -94,7 +110,7 @@ String lerTipoUsuario() {
   }
 }
 
-void menuLivros(LivroService service) {
+Future<void> menuLivros(LivroService service) async {
   var opcao = -1;
   while (opcao != 0) {
     menu('Gerenciar Livros', const ['1. Adicionar livro', '2. Listar livros',
@@ -103,12 +119,12 @@ void menuLivros(LivroService service) {
     opcao = lerOpcao();
     try {
       switch (opcao) {
-        case 1: service.adicionarLivro(lerLivro()); break;
+        case 1: await service.adicionarLivro(lerLivro()); break;
         case 2: service.ListarLivros(); break;
         case 3:
           final livro = lerLivro('Digite o ID do livro a ser alterado: ');
-          service.alterarLivro(livro.id, livro.titulo, livro.autor, livro.categoria); break;
-        case 4: service.removerLivro(lerInt('Digite o ID do livro a ser removido: ')); break;
+          await service.alterarLivro(livro.id, livro.titulo, livro.autor, livro.categoria); break;
+        case 4: await service.removerLivro(lerInt('Digite o ID do livro a ser removido: ')); break;
         case 5: imprimirLivro(service.buscarPorId(lerInt('Digite o ID do livro: '))); break;
         case 0: voltar(); break;
         default: print('Opção inválida!');
@@ -121,7 +137,7 @@ Livro lerLivro([String perguntaId = 'Digite o ID do livro: ']) => Livro(
   lerInt(perguntaId), lerTexto('Digite o título do livro: '),
   lerTexto('Digite o autor do livro: '), lerTexto('Digite a categoria do livro: '));
 
-void menuExemplares(ExemplarService service) {
+Future<void> menuExemplares(ExemplarService service) async {
   var opcao = -1;
   while (opcao != 0) {
     menu('Gerenciar Exemplares', const ['1. Adicionar exemplar', '2. Listar exemplares',
@@ -130,12 +146,12 @@ void menuExemplares(ExemplarService service) {
     opcao = lerOpcao();
     try {
       switch (opcao) {
-        case 1: service.adicionarExemplar(lerExemplar()); break;
+        case 1: await service.adicionarExemplar(lerExemplar()); break;
         case 2: service.ListarExemplares(); break;
         case 3:
           final exemplar = lerExemplar('Digite o ID do exemplar a ser alterado: ');
-          service.alterarExemplar(exemplar.id, exemplar.livroId, exemplar.disponivel); break;
-        case 4: service.removerExemplar(lerInt('Digite o ID do exemplar a ser removido: ')); break;
+          await service.alterarExemplar(exemplar.id, exemplar.livroId, exemplar.disponivel); break;
+        case 4: await service.removerExemplar(lerInt('Digite o ID do exemplar a ser removido: ')); break;
         case 5: imprimirExemplar(service.buscarPorId(lerInt('Digite o ID do exemplar: '))); break;
         case 6: imprimirExemplar(service.buscarDisponivel(lerInt('Digite o ID do livro: '))); break;
         case 0: voltar(); break;
@@ -149,7 +165,7 @@ Exemplar lerExemplar([String perguntaId = 'Digite o ID do exemplar: ']) => Exemp
   lerInt(perguntaId), lerInt('Digite o ID do livro: '),
   bool.parse(lerTexto('Digite se o exemplar está disponível (true/false): ')));
 
-void menuEmprestimos(UsuarioService usuarios, ExemplarService exemplares, EmprestimoService service) {
+Future<void> menuEmprestimos(UsuarioService usuarios, ExemplarService exemplares, EmprestimoService service) async {
   var opcao = -1;
   while (opcao != 0) {
     menu('Gerenciar Empréstimos', const ['1. Realizar empréstimo', '2. Devolver exemplar',
@@ -158,8 +174,8 @@ void menuEmprestimos(UsuarioService usuarios, ExemplarService exemplares, Empres
     opcao = lerOpcao();
     try {
       switch (opcao) {
-        case 1: realizarEmprestimo(usuarios, exemplares, service); break;
-        case 2: devolverEmprestimo(exemplares, service); break;
+        case 1: await realizarEmprestimo(usuarios, exemplares, service); break;
+        case 2: await devolverEmprestimo(exemplares, service); break;
         case 3: service.ListarEmprestimos(); break;
         case 4: imprimirEmprestimo(service.buscarPorId(lerInt('Digite o ID do empréstimo: '))); break;
         case 5: imprimirEmprestimo(service.buscarPorUsuarioId(lerInt('Digite o ID do usuário: '))); break;
@@ -170,7 +186,7 @@ void menuEmprestimos(UsuarioService usuarios, ExemplarService exemplares, Empres
   }
 }
 
-void realizarEmprestimo(UsuarioService usuarios, ExemplarService exemplares, EmprestimoService service) {
+Future<void> realizarEmprestimo(UsuarioService usuarios, ExemplarService exemplares, EmprestimoService service) async {
   final id = lerInt('Digite o ID do empréstimo: ');
   final usuarioId = lerInt('Digite o ID do usuário: ');
   final exemplarId = lerInt('Digite o ID do exemplar: ');
@@ -179,21 +195,25 @@ void realizarEmprestimo(UsuarioService usuarios, ExemplarService exemplares, Emp
   if (exemplar == null) { print('Exemplar não encontrado.'); return; }
   if (!exemplar.disponivel) { print('O exemplar não está disponível.'); return; }
   final data = DateTime.parse(lerTexto('Digite a data prevista de devolução (AAAA-MM-DD): '));
-  service.adicionarEmprestimo(Emprestimo(id, usuarioId, exemplarId, DateTime.now(), data));
+  await service.adicionarEmprestimo(Emprestimo(id, usuarioId, exemplarId, DateTime.now(), data));
   exemplar.disponivel = false;
+  await exemplares.salvarDados();
 }
 
-void devolverEmprestimo(ExemplarService exemplares, EmprestimoService service) {
+Future<void> devolverEmprestimo(ExemplarService exemplares, EmprestimoService service) async {
   final id = lerInt('Digite o ID do empréstimo: ');
   final emprestimo = service.buscarPorId(id);
   if (emprestimo == null) { print('Empréstimo não encontrado.'); return; }
   if (emprestimo.dataDevolucao != null) { print('Este empréstimo já foi devolvido.'); return; }
-  service.devolverEmprestimo(id, DateTime.now());
+  await service.devolverEmprestimo(id, DateTime.now());
   final exemplar = exemplares.buscarPorId(emprestimo.exemplarId);
-  if (exemplar != null) exemplar.disponivel = true;
+  if (exemplar != null) {
+    exemplar.disponivel = true;
+    await exemplares.salvarDados();
+  }
 }
 
-void menuReservas(UsuarioService usuarios, LivroService livros, ReservaService service) {
+Future<void> menuReservas(UsuarioService usuarios, LivroService livros, ReservaService service) async {
   var opcao = -1;
   while (opcao != 0) {
     menu('Gerenciar Reservas', const ['1. Adicionar reserva', '2. Listar reservas',
@@ -202,9 +222,9 @@ void menuReservas(UsuarioService usuarios, LivroService livros, ReservaService s
     opcao = lerOpcao();
     try {
       switch (opcao) {
-        case 1: adicionarReserva(usuarios, livros, service); break;
+        case 1: await adicionarReserva(usuarios, livros, service); break;
         case 2: service.ListarReservas(); break;
-        case 3: service.cancelarReserva(lerInt('Digite o ID da reserva: ')); break;
+        case 3: await service.cancelarReserva(lerInt('Digite o ID da reserva: ')); break;
         case 4: imprimirReserva(service.buscarPorId(lerInt('Digite o ID da reserva: '))); break;
         case 5: imprimirReserva(service.buscarPorUsuarioId(lerInt('Digite o ID do usuário: '))); break;
         case 0: voltar(); break;
@@ -214,13 +234,13 @@ void menuReservas(UsuarioService usuarios, LivroService livros, ReservaService s
   }
 }
 
-void adicionarReserva(UsuarioService usuarios, LivroService livros, ReservaService service) {
+Future<void> adicionarReserva(UsuarioService usuarios, LivroService livros, ReservaService service) async {
   final id = lerInt('Digite o ID da reserva: ');
   final usuarioId = lerInt('Digite o ID do usuário: ');
   final livroId = lerInt('Digite o ID do livro: ');
   if (usuarios.buscarPorId(usuarioId) == null) { print('Usuário não encontrado.'); return; }
   if (livros.buscarPorId(livroId) == null) { print('Livro não encontrado.'); return; }
-  service.adicionarReserva(Reserva(id, usuarioId, livroId, DateTime.now()));
+  await service.adicionarReserva(Reserva(id, usuarioId, livroId, DateTime.now()));
 }
 
 void menuRelatorios(RelatorioService service) {
