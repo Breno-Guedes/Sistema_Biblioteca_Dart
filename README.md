@@ -62,22 +62,34 @@ A estrutura do projeto está organizada da seguinte forma:
 
 ```text
 Sistema_Biblioteca_Dart/
-├── main.dart
+├── dados/
+│   ├── emprestimos.json
+│   ├── exemplares.json
+│   ├── livros.json
+│   ├── reservas.json
+│   └── usuarios.json
+│
 ├── enums/
 │   └── tipo_usuario.dart
+│
 ├── models/
 │   ├── Emprestimo.dart
 │   ├── Exemplar.dart
 │   ├── Livro.dart
 │   ├── Reserva.dart
 │   └── Usuario.dart
-└── services/
-    ├── emprestimo_service.dart
-    ├── exemplar_service.dart
-    ├── livro_service.dart
-    ├── relatorio_service.dart
-    ├── reserva_service.dart
-    └── usuario_service.dart
+│
+├── services/
+│   ├── emprestimo_service.dart
+│   ├── exemplar_service.dart
+│   ├── livro_service.dart
+│   ├── relatorio_service.dart
+│   ├── reserva_service.dart
+│   ├── storage_service.dart
+│   └── usuario_service.dart
+│
+├── main.dart
+└── README.md
 ```
 
 ### Organização dos diretórios
