@@ -62,6 +62,7 @@ A estrutura do projeto está organizada da seguinte forma:
 
 ```text
 Sistema_Biblioteca_Dart/
+├── .dart_tool/
 ├── dados/
 │   ├── emprestimos.json
 │   ├── exemplares.json
@@ -83,12 +84,15 @@ Sistema_Biblioteca_Dart/
 │   ├── emprestimo_service.dart
 │   ├── exemplar_service.dart
 │   ├── livro_service.dart
+│   ├── politica_emprestimo_service.dart
 │   ├── relatorio_service.dart
 │   ├── reserva_service.dart
 │   ├── storage_service.dart
 │   └── usuario_service.dart
 │
 ├── main.dart
+├── pubspec.lock
+├── pubspec.yaml
 └── README.md
 ```
 

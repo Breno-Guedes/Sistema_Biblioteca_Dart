@@ -12,6 +12,9 @@ import 'storage_service.dart';
     Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, emprestimos);
 
     Future<void> adicionarEmprestimo(Emprestimo emprestimo) async {
+      if (buscarPorId(emprestimo.id) != null) {
+        throw StateError('Já existe empréstimo com este ID.');
+      }
       emprestimos.add(emprestimo);
       await salvarDados();
       print("Empréstimo com ID ${emprestimo.id} adicionado com sucesso!");
@@ -52,12 +55,25 @@ import 'storage_service.dart';
       return null;
     }
 
-    Future<void> devolverEmprestimo(int id, DateTime dataDevolucao) async {
+    List<Emprestimo> ativosDoUsuario(int usuarioId) => emprestimos
+        .where((emprestimo) => emprestimo.usuarioId == usuarioId && emprestimo.ativo)
+        .toList();
+
+    bool usuarioPossuiAtraso(int usuarioId, DateTime referencia) => ativosDoUsuario(usuarioId)
+        .any((emprestimo) => emprestimo.dataPrevistaDevolucao.isBefore(_somenteData(referencia)));
+
+    DateTime _somenteData(DateTime data) => DateTime(data.year, data.month, data.day);
+
+    Future<void> devolverEmprestimo(int id, DateTime dataDevolucao,
+        {double multa = 0, double ressarcimento = 0, String? ocorrencia}) async {
       Emprestimo? emprestimo = buscarPorId(id);
       if(emprestimo == null){
         print("Empréstimo com ID $id não encontrado.");
       } else {
         emprestimo.dataDevolucao = dataDevolucao;
+        emprestimo.multa = multa;
+        emprestimo.ressarcimento = ressarcimento;
+        emprestimo.ocorrencia = ocorrencia;
         await salvarDados();
         print("Empréstimo com ID $id devolvido com sucesso!");
       }

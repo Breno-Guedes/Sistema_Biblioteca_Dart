@@ -12,6 +12,7 @@ class ExemplarService{
   Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, exemplares);
   
   Future<void> adicionarExemplar(Exemplar exemplar) async {
+    if (buscarPorId(exemplar.id) != null) throw StateError('Já existe exemplar com este ID.');
     exemplares.add(exemplar);
     await salvarDados();
     print("Exemplar com ID ${exemplar.id} adicionado com sucesso!");
@@ -49,6 +50,9 @@ class ExemplarService{
     }
     return null;
   }
+
+  int quantidadeDisponivel(int livroId) => exemplares
+      .where((exemplar) => exemplar.livroId == livroId && exemplar.disponivel).length;
 
   Future<void> alterarExemplar(int id, int livroId, bool disponivel) async {
     Exemplar? exemplar = buscarPorId(id);

@@ -1,6 +1,5 @@
 import 'dart:io';
-
-import 'enums/tipo_usuario.dart';
+import 'package:tint/tint.dart';
 import 'models/Emprestimo.dart';
 import 'models/Exemplar.dart';
 import 'models/Livro.dart';
@@ -9,6 +8,7 @@ import 'models/Usuario.dart';
 import 'services/emprestimo_service.dart';
 import 'services/exemplar_service.dart';
 import 'services/livro_service.dart';
+import 'services/politica_emprestimo_service.dart';
 import 'services/relatorio_service.dart';
 import 'services/reserva_service.dart';
 import 'services/usuario_service.dart';
@@ -19,288 +19,484 @@ Future<void> main() async {
   final exemplares = ExemplarService();
   final emprestimos = EmprestimoService();
   final reservas = ReservaService();
-  final relatorios = RelatorioService(livroService: livros, exemplarService: exemplares,
-      emprestimoService: emprestimos, reservaService: reservas);
-
+  
+  final relatorios = RelatorioService(
+    livroService: livros, 
+    exemplarService: exemplares, 
+    emprestimoService: emprestimos, 
+    reservaService: reservas
+  );
+  
   await Future.wait([
-    usuarios.carregarDados(),
-    livros.carregarDados(),
-    exemplares.carregarDados(),
-    emprestimos.carregarDados(),
-    reservas.carregarDados(),
+    usuarios.carregarDados(), 
+    livros.carregarDados(), 
+    exemplares.carregarDados(), 
+    emprestimos.carregarDados(), 
+    reservas.carregarDados()
   ]);
-
-  var opcao = -1;
-  while (opcao != 0) {
-    menu('Sistema de Biblioteca', const [
-      '1. Gerenciar Usuários', '2. Gerenciar Livros',
-      '3. Gerenciar Exemplares', '4. Gerenciar Empréstimos',
-      '5. Gerenciar Reservas', '6. Gerar Relatórios', '0. Sair',
+  
+  int opcao;
+  do {
+    opcao = menu('SISTEMA DE BIBLIOTECA', [
+      '1. Usuários', 
+      '2. Títulos / Acervo', 
+      '3. Exemplares', 
+      '4. Empréstimos', 
+      '5. Reservas', 
+      '6. Pendências financeiras', 
+      '7. Relatórios', 
+      '0. Sair'
     ]);
-    opcao = lerOpcao();
-    switch (opcao) {
-      case 1: await menuUsuarios(usuarios); break;
-      case 2: await menuLivros(livros); break;
-      case 3: await menuExemplares(exemplares); break;
-      case 4: await menuEmprestimos(usuarios, exemplares, emprestimos); break;
-      case 5: await menuReservas(usuarios, livros, reservas); break;
-      case 6: menuRelatorios(relatorios); break;
-      case 0: print('Saindo do sistema...'); break;
-      default: print('Opção inválida!');
+    
+    try {
+      if (opcao == 1) await menuUsuarios(usuarios, emprestimos);
+      if (opcao == 2) await menuLivros(livros, exemplares, reservas);
+      if (opcao == 3) await menuExemplares(exemplares, livros, emprestimos);
+      if (opcao == 4) await menuEmprestimos(usuarios, livros, exemplares, emprestimos, reservas);
+      if (opcao == 5) await menuReservas(usuarios, livros, exemplares, reservas);
+      if (opcao == 6) await menuPendencias(usuarios);
+      if (opcao == 7) menuRelatorios(relatorios);
+    } catch (e) { 
+      erro(e.toString().replaceFirst('Bad state: ', '')); 
     }
-  }
-
+  } while (opcao != 0);
+  
   await Future.wait([
-    usuarios.salvarDados(),
-    livros.salvarDados(),
-    exemplares.salvarDados(),
-    emprestimos.salvarDados(),
-    reservas.salvarDados(),
+    usuarios.salvarDados(), 
+    livros.salvarDados(), 
+    exemplares.salvarDados(), 
+    emprestimos.salvarDados(), 
+    reservas.salvarDados()
   ]);
+  
+  sucesso('Sistema encerrado. Até logo!');
 }
 
-void menu(String titulo, List<String> opcoes) {
-  print('\n========================================');
-  print('=== $titulo ===');
-  print('----------------------------------------');
-  for (final opcao in opcoes) print(opcao);
-  print('----------------------------------------');
-  stdout.write('Escolha uma opção: ');
-}
-
-int lerOpcao() {
-  try { return int.parse(stdin.readLineSync()!); }
-  catch (_) { print('Erro: entrada inválida. Por favor, digite um número.'); return -1; }
-}
-
-Future<void> menuUsuarios(UsuarioService service) async {
-  var opcao = -1;
-  while (opcao != 0) {
-    menu('Gerenciar Usuários', const ['1. Adicionar usuário', '2. Listar usuários',
-      '3. Alterar usuário', '4. Remover usuário', '5. Buscar usuário por ID',
-      '0. Voltar ao Menu Principal']);
-    opcao = lerOpcao();
-    try {
-      switch (opcao) {
-        case 1:
-          await service.adicionarUsuario(Usuario(lerInt('Digite o ID do usuário: '),
-              lerTexto('Digite o nome do usuário: '), lerTipoUsuario())); break;
-        case 2: service.ListarUsuarios(); break;
-        case 3:
-          final id = lerInt('Digite o ID do usuário a ser alterado: ');
-          await service.alterarUsuario(id, lerTexto('Digite o novo nome do usuário: '), lerTipoUsuario()); break;
-        case 4: await service.removerUsuario(lerInt('Digite o ID do usuário a ser removido: ')); break;
-        case 5: imprimirUsuario(service.buscarPorId(lerInt('Digite o ID do usuário: '))); break;
-        case 0: voltar(); break;
-        default: print('Opção inválida!');
-      }
-    } catch (_) { dadosInvalidos(); }
-  }
-}
-
-String lerTipoUsuario() {
-  print('Escolha o tipo do usuário:');
-  print('1. Aluno'); print('2. Professor'); print('3. Comunidade');
-  stdout.write('Escolha uma opção: ');
-  switch (lerOpcao()) {
-    case 1: return tipo_usuario.Aluno.toString().split('.').last;
-    case 2: return tipo_usuario.Professor.toString().split('.').last;
-    case 3: return tipo_usuario.Comunidade.toString().split('.').last;
-    default: throw const FormatException();
-  }
-}
-
-Future<void> menuLivros(LivroService service) async {
-  var opcao = -1;
-  while (opcao != 0) {
-    menu('Gerenciar Livros', const ['1. Adicionar livro', '2. Listar livros',
-      '3. Alterar livro', '4. Remover livro', '5. Buscar livro por ID',
-      '0. Voltar ao Menu Principal']);
-    opcao = lerOpcao();
-    try {
-      switch (opcao) {
-        case 1: await service.adicionarLivro(lerLivro()); break;
-        case 2: service.ListarLivros(); break;
-        case 3:
-          final livro = lerLivro('Digite o ID do livro a ser alterado: ');
-          await service.alterarLivro(livro.id, livro.titulo, livro.autor, livro.categoria); break;
-        case 4: await service.removerLivro(lerInt('Digite o ID do livro a ser removido: ')); break;
-        case 5: imprimirLivro(service.buscarPorId(lerInt('Digite o ID do livro: '))); break;
-        case 0: voltar(); break;
-        default: print('Opção inválida!');
-      }
-    } catch (_) { dadosInvalidos(); }
-  }
-}
-
-Livro lerLivro([String perguntaId = 'Digite o ID do livro: ']) => Livro(
-  lerInt(perguntaId), lerTexto('Digite o título do livro: '),
-  lerTexto('Digite o autor do livro: '), lerTexto('Digite a categoria do livro: '));
-
-Future<void> menuExemplares(ExemplarService service) async {
-  var opcao = -1;
-  while (opcao != 0) {
-    menu('Gerenciar Exemplares', const ['1. Adicionar exemplar', '2. Listar exemplares',
-      '3. Alterar exemplar', '4. Remover exemplar', '5. Buscar exemplar por ID',
-      '6. Buscar exemplar disponível por ID do livro', '0. Voltar ao Menu Principal']);
-    opcao = lerOpcao();
-    try {
-      switch (opcao) {
-        case 1: await service.adicionarExemplar(lerExemplar()); break;
-        case 2: service.ListarExemplares(); break;
-        case 3:
-          final exemplar = lerExemplar('Digite o ID do exemplar a ser alterado: ');
-          await service.alterarExemplar(exemplar.id, exemplar.livroId, exemplar.disponivel); break;
-        case 4: await service.removerExemplar(lerInt('Digite o ID do exemplar a ser removido: ')); break;
-        case 5: imprimirExemplar(service.buscarPorId(lerInt('Digite o ID do exemplar: '))); break;
-        case 6: imprimirExemplar(service.buscarDisponivel(lerInt('Digite o ID do livro: '))); break;
-        case 0: voltar(); break;
-        default: print('Opção inválida!');
-      }
-    } catch (_) { dadosInvalidos(); }
-  }
-}
-
-Exemplar lerExemplar([String perguntaId = 'Digite o ID do exemplar: ']) => Exemplar(
-  lerInt(perguntaId), lerInt('Digite o ID do livro: '),
-  bool.parse(lerTexto('Digite se o exemplar está disponível (true/false): ')));
-
-Future<void> menuEmprestimos(UsuarioService usuarios, ExemplarService exemplares, EmprestimoService service) async {
-  var opcao = -1;
-  while (opcao != 0) {
-    menu('Gerenciar Empréstimos', const ['1. Realizar empréstimo', '2. Devolver exemplar',
-      '3. Listar empréstimos', '4. Buscar empréstimo por ID',
-      '5. Buscar empréstimo por ID de usuário', '0. Voltar ao Menu Principal']);
-    opcao = lerOpcao();
-    try {
-      switch (opcao) {
-        case 1: await realizarEmprestimo(usuarios, exemplares, service); break;
-        case 2: await devolverEmprestimo(exemplares, service); break;
-        case 3: service.ListarEmprestimos(); break;
-        case 4: imprimirEmprestimo(service.buscarPorId(lerInt('Digite o ID do empréstimo: '))); break;
-        case 5: imprimirEmprestimo(service.buscarPorUsuarioId(lerInt('Digite o ID do usuário: '))); break;
-        case 0: voltar(); break;
-        default: print('Opção inválida!');
-      }
-    } catch (_) { dadosInvalidos(); }
-  }
-}
-
-Future<void> realizarEmprestimo(UsuarioService usuarios, ExemplarService exemplares, EmprestimoService service) async {
-  final id = lerInt('Digite o ID do empréstimo: ');
-  final usuarioId = lerInt('Digite o ID do usuário: ');
-  final exemplarId = lerInt('Digite o ID do exemplar: ');
-  if (usuarios.buscarPorId(usuarioId) == null) { print('Usuário não encontrado.'); return; }
-  final exemplar = exemplares.buscarPorId(exemplarId);
-  if (exemplar == null) { print('Exemplar não encontrado.'); return; }
-  if (!exemplar.disponivel) { print('O exemplar não está disponível.'); return; }
-  final data = DateTime.parse(lerTexto('Digite a data prevista de devolução (AAAA-MM-DD): '));
-  await service.adicionarEmprestimo(Emprestimo(id, usuarioId, exemplarId, DateTime.now(), data));
-  exemplar.disponivel = false;
-  await exemplares.salvarDados();
-}
-
-Future<void> devolverEmprestimo(ExemplarService exemplares, EmprestimoService service) async {
-  final id = lerInt('Digite o ID do empréstimo: ');
-  final emprestimo = service.buscarPorId(id);
-  if (emprestimo == null) { print('Empréstimo não encontrado.'); return; }
-  if (emprestimo.dataDevolucao != null) { print('Este empréstimo já foi devolvido.'); return; }
-  await service.devolverEmprestimo(id, DateTime.now());
-  final exemplar = exemplares.buscarPorId(emprestimo.exemplarId);
-  if (exemplar != null) {
-    exemplar.disponivel = true;
-    await exemplares.salvarDados();
-  }
-}
-
-Future<void> menuReservas(UsuarioService usuarios, LivroService livros, ReservaService service) async {
-  var opcao = -1;
-  while (opcao != 0) {
-    menu('Gerenciar Reservas', const ['1. Adicionar reserva', '2. Listar reservas',
-      '3. Cancelar reserva', '4. Buscar reserva por ID',
-      '5. Buscar reserva por ID de usuário', '0. Voltar ao Menu Principal']);
-    opcao = lerOpcao();
-    try {
-      switch (opcao) {
-        case 1: await adicionarReserva(usuarios, livros, service); break;
-        case 2: service.ListarReservas(); break;
-        case 3: await service.cancelarReserva(lerInt('Digite o ID da reserva: ')); break;
-        case 4: imprimirReserva(service.buscarPorId(lerInt('Digite o ID da reserva: '))); break;
-        case 5: imprimirReserva(service.buscarPorUsuarioId(lerInt('Digite o ID do usuário: '))); break;
-        case 0: voltar(); break;
-        default: print('Opção inválida!');
-      }
-    } catch (_) { dadosInvalidos(); }
-  }
-}
-
-Future<void> adicionarReserva(UsuarioService usuarios, LivroService livros, ReservaService service) async {
-  final id = lerInt('Digite o ID da reserva: ');
-  final usuarioId = lerInt('Digite o ID do usuário: ');
-  final livroId = lerInt('Digite o ID do livro: ');
-  if (usuarios.buscarPorId(usuarioId) == null) { print('Usuário não encontrado.'); return; }
-  if (livros.buscarPorId(livroId) == null) { print('Livro não encontrado.'); return; }
-  await service.adicionarReserva(Reserva(id, usuarioId, livroId, DateTime.now()));
-}
-
-void menuRelatorios(RelatorioService service) {
-  var opcao = -1;
-  while (opcao != 0) {
-    menu('Gerar Relatórios', const ['1. Relatório de livros', '2. Relatório de empréstimos',
-      '3. Relatório de reservas', '4. Resumo geral', '0. Voltar ao Menu Principal']);
-    opcao = lerOpcao();
-    switch (opcao) {
-      case 1: service.imprimirRelatorioLivros(); break;
-      case 2: service.imprimirRelatorioEmprestimos(); break;
-      case 3: service.imprimirRelatorioReservas(); break;
-      case 4: service.imprimirResumo(); break;
-      case 0: voltar(); break;
-      default: print('Opção inválida!');
+Future<void> menuUsuarios(UsuarioService s, EmprestimoService es) async { 
+  int o; 
+  do { 
+    o = menu('USUÁRIOS', [
+      '1. Cadastrar', 
+      '2. Listar', 
+      '3. Alterar', 
+      '4. Remover', 
+      '5. Consultar por ID', 
+      '0. Voltar'
+    ]); 
+    
+    if (o == 1) {
+      await s.adicionarUsuario(Usuario(lerInt('ID: '), lerTexto('Nome: '), lerTipoUsuario())); 
     }
+    if (o == 2) {
+      s.ListarUsuarios(); 
+    }
+    if (o == 3) {
+      await s.alterarUsuario(lerInt('ID: '), lerTexto('Novo nome: '), lerTipoUsuario()); 
+    }
+    if (o == 4) { 
+      final id = lerInt('ID: '); 
+      if (es.ativosDoUsuario(id).isNotEmpty) {
+        throw StateError('Não é possível remover usuário com empréstimos ativos.'); 
+      }
+      await s.removerUsuario(id); 
+    } 
+    if (o == 5) {
+      imprimirUsuario(s.buscarPorId(lerInt('ID: '))); 
+    }
+  } while (o != 0); 
+}
+
+Future<void> menuLivros(LivroService s, ExemplarService es, ReservaService rs) async { 
+  int o; 
+  do { 
+    o = menu('TÍTULOS / ACERVO', [
+      '1. Cadastrar título', 
+      '2. Listar títulos', 
+      '3. Alterar título', 
+      '4. Baixar título', 
+      '5. Consultar por ID', 
+      '0. Voltar'
+    ]); 
+    
+    if (o == 1) {
+      await s.adicionarLivro(lerLivro()); 
+    }
+    if (o == 2) {
+      s.ListarLivros(); 
+    }
+    if (o == 3) { 
+      final l = lerLivro('ID do título: '); 
+      await s.alterarLivro(l.id, l.titulo, l.autor, l.categoria, l.natureza); 
+    } 
+    if (o == 4) { 
+      final id = lerInt('ID: '); 
+      if (es.exemplares.any((e) => e.livroId == id) || rs.reservas.any((r) => r.livroId == id)) {
+        throw StateError('Remova exemplares e cancele reservas antes de baixar o título.'); 
+      }
+      await s.removerLivro(id); 
+    } 
+    if (o == 5) {
+      imprimirLivro(s.buscarPorId(lerInt('ID: '))); 
+    }
+  } while (o != 0); 
+}
+
+Future<void> menuExemplares(ExemplarService s, LivroService ls, EmprestimoService es) async { 
+  int o; 
+  do { 
+    o = menu('EXEMPLARES', [
+      '1. Adquirir/cadastrar', 
+      '2. Listar', 
+      '3. Alterar disponibilidade', 
+      '4. Baixar exemplar', 
+      '5. Consultar por ID', 
+      '6. Consultar disponível por título', 
+      '0. Voltar'
+    ]); 
+    
+    if (o == 1) { 
+      final e = lerExemplar(); 
+      if (ls.buscarPorId(e.livroId) == null) {
+        throw StateError('Título não encontrado.'); 
+      }
+      await s.adicionarExemplar(e); 
+    } 
+    if (o == 2) {
+      s.ListarExemplares(); 
+    }
+    if (o == 3) { 
+      final e = s.buscarPorId(lerInt('ID: ')); 
+      if (e == null) {
+        throw StateError('Exemplar não encontrado.'); 
+      }
+      await s.alterarExemplar(e.id, e.livroId, lerSimNao('Disponível?')); 
+    } 
+    if (o == 4) { 
+      final id = lerInt('ID: '); 
+      if (es.emprestimos.any((x) => x.exemplarId == id && x.ativo)) {
+        throw StateError('Não é possível baixar exemplar emprestado.'); 
+      }
+      await s.removerExemplar(id); 
+    } 
+    if (o == 5) {
+      imprimirExemplar(s.buscarPorId(lerInt('ID: '))); 
+    }
+    if (o == 6) {
+      imprimirExemplar(s.buscarDisponivel(lerInt('ID do título: '))); 
+    }
+  } while (o != 0); 
+}
+
+Future<void> menuEmprestimos(UsuarioService us, LivroService ls, ExemplarService xs, EmprestimoService es, ReservaService rs) async { 
+  int o; 
+  do { 
+    o = menu('EMPRÉSTIMOS', [
+      '1. Realizar empréstimo', 
+      '2. Registrar devolução', 
+      '3. Listar', 
+      '4. Consultar por ID', 
+      '5. Consultar ativos por usuário', 
+      '0. Voltar'
+    ]); 
+    
+    if (o == 1) await realizarEmprestimo(us, ls, xs, es, rs); 
+    if (o == 2) await devolverEmprestimo(us, ls, xs, es); 
+    if (o == 3) es.ListarEmprestimos(); 
+    if (o == 4) { 
+      final item = es.buscarPorId(lerInt('ID: ')); 
+      if (item == null) {
+        erro('Empréstimo não encontrado.'); 
+      } else {
+        imprimirEmprestimo(item); 
+      }
+    } 
+    if (o == 5) { 
+      final itens = es.ativosDoUsuario(lerInt('ID do usuário: ')); 
+      if (itens.isEmpty) {
+        aviso('Nenhum empréstimo ativo.'); 
+      } else {
+        itens.forEach(imprimirEmprestimo); 
+      }
+    } 
+  } while (o != 0); 
+}
+
+Future<void> realizarEmprestimo(UsuarioService us, LivroService ls, ExemplarService xs, EmprestimoService es, ReservaService rs) async {
+  final id = lerInt('ID do empréstimo: '); 
+  final usuario = us.buscarPorId(lerInt('ID do usuário: ')); 
+  final livro = ls.buscarPorId(lerInt('ID do título: '));
+  
+  if (usuario == null || livro == null) {
+    throw StateError('Usuário ou título não encontrado.');
+  }
+  if (usuario.bloqueado) {
+    throw StateError('Usuário bloqueado: pendência de R\$ ${usuario.pendenciaFinanceira.toStringAsFixed(2)}.');
+  }
+  if (es.usuarioPossuiAtraso(usuario.id, DateTime.now())) {
+    throw StateError('Usuário possui empréstimo em atraso.');
+  }
+  
+  final limite = PoliticaEmprestimoService.limitePara(usuario, livro);
+  if (es.ativosDoUsuario(usuario.id).length >= limite) {
+    throw StateError('Limite atingido: $limite exemplar(es).');
+  }
+  
+  final exemplar = xs.buscarDisponivel(livro.id);
+  if (exemplar == null) { 
+    aviso('Não há exemplar disponível. Use Reservas para entrar na fila.'); 
+    return; 
+  }
+  
+  if (rs.reservas.any((r) => r.livroId == livro.id && r.usuarioId != usuario.id)) {
+    throw StateError('Há reserva pendente para outro usuário.');
+  }
+  
+  final prazo = PoliticaEmprestimoService.prazoEmDiasPara(usuario, livro); 
+  final prevista = DateTime.now().add(Duration(days: prazo));
+  
+  await es.adicionarEmprestimo(Emprestimo(id, usuario.id, exemplar.id, DateTime.now(), prevista)); 
+  exemplar.disponivel = false;
+  rs.reservas.removeWhere((r) => r.livroId == livro.id && r.usuarioId == usuario.id);
+  
+  await Future.wait([xs.salvarDados(), rs.salvarDados()]); 
+  sucesso('Empréstimo realizado. Prazo: $prazo dia(s), até ${formatarData(prevista)}.');
+}
+
+Future<void> devolverEmprestimo(UsuarioService us, LivroService ls, ExemplarService xs, EmprestimoService es) async {
+  final emprestimo = es.buscarPorId(lerInt('ID do empréstimo: ')); 
+  if (emprestimo == null || !emprestimo.ativo) {
+    throw StateError('Empréstimo não encontrado ou já devolvido.');
+  }
+  
+  final exemplar = xs.buscarPorId(emprestimo.exemplarId); 
+  final livro = exemplar == null ? null : ls.buscarPorId(exemplar.livroId); 
+  if (livro == null) {
+    throw StateError('Título do empréstimo não encontrado.');
+  }
+  
+  final atraso = DateTime.now().difference(emprestimo.dataPrevistaDevolucao).inDays; 
+  final multa = atraso > 0 ? atraso * PoliticaEmprestimoService.multaDiariaPara(livro) : 0.0; 
+  final ocorrencia = escolherOcorrencia(); 
+  final ressarcimento = ocorrencia == null ? 0.0 : PoliticaEmprestimoService.valorRessarcimentoPara(livro);
+  
+  await es.devolverEmprestimo(emprestimo.id, DateTime.now(), multa: multa, ressarcimento: ressarcimento, ocorrencia: ocorrencia); 
+  
+  if (multa + ressarcimento > 0) {
+    await us.registrarPendencia(emprestimo.usuarioId, multa + ressarcimento); 
+  }
+  
+  if (exemplar != null) { 
+    exemplar.disponivel = ocorrencia == null; 
+    await xs.salvarDados(); 
+  }
+  
+  if (multa > 0) aviso('Atraso: $atraso dia(s); multa: R\$ ${multa.toStringAsFixed(2)}.'); 
+  if (ressarcimento > 0) aviso('Ocorrência: $ocorrencia; ressarcimento: R\$ ${ressarcimento.toStringAsFixed(2)}. Exemplar baixado.'); 
+  sucesso('Devolução registrada.');
+}
+
+Future<void> menuReservas(UsuarioService us, LivroService ls, ExemplarService xs, ReservaService s) async { 
+  int o; 
+  do { 
+    o = menu('RESERVAS', [
+      '1. Reservar título indisponível', 
+      '2. Listar fila', 
+      '3. Cancelar', 
+      '4. Consultar por ID', 
+      '0. Voltar'
+    ]); 
+    
+    if (o == 1) { 
+      final id = lerInt('ID da reserva: '); 
+      final u = lerInt('ID do usuário: '); 
+      final l = lerInt('ID do título: '); 
+      
+      if (us.buscarPorId(u) == null || ls.buscarPorId(l) == null) {
+        throw StateError('Usuário ou título não encontrado.'); 
+      }
+      if (xs.quantidadeDisponivel(l) > 0) {
+        throw StateError('O título está disponível; faça o empréstimo diretamente.'); 
+      }
+      if (s.reservas.any((r) => r.usuarioId == u && r.livroId == l)) {
+        throw StateError('Usuário já possui reserva para este título.'); 
+      }
+      await s.adicionarReserva(Reserva(id, u, l, DateTime.now())); 
+    } 
+    if (o == 2) s.ListarReservas(); 
+    if (o == 3) await s.cancelarReserva(lerInt('ID: ')); 
+    if (o == 4) imprimirReserva(s.buscarPorId(lerInt('ID: '))); 
+  } while (o != 0); 
+}
+
+Future<void> menuPendencias(UsuarioService s) async { 
+  int o; 
+  do { 
+    o = menu('PENDÊNCIAS FINANCEIRAS', [
+      '1. Listar bloqueados', 
+      '2. Registrar pagamento', 
+      '0. Voltar'
+    ]); 
+    
+    if (o == 1) { 
+      final itens = s.usuarios.where((u) => u.bloqueado); 
+      if (itens.isEmpty) {
+        sucesso('Não há usuários bloqueados.'); 
+      } else {
+        itens.forEach(imprimirUsuario); 
+      }
+    } 
+    if (o == 2) {
+      await s.quitarPendencia(lerInt('ID do usuário: '), lerDouble('Valor pago: R\$ ')); 
+    }
+  } while (o != 0); 
+}
+
+void menuRelatorios(RelatorioService s) { 
+  int o; 
+  do { 
+    o = menu('RELATÓRIOS', [
+      '1. Livros', 
+      '2. Empréstimos', 
+      '3. Reservas', 
+      '4. Resumo', 
+      '0. Voltar'
+    ]); 
+    
+    if (o == 1) s.imprimirRelatorioLivros(); 
+    if (o == 2) s.imprimirRelatorioEmprestimos(); 
+    if (o == 3) s.imprimirRelatorioReservas(); 
+    if (o == 4) s.imprimirResumo(); 
+  } while (o != 0); 
+}
+
+int menu(String t, List<String> opcoes) { 
+  print('\n${'═' * 54}'.brightCyan()); 
+  print('  $t'.bold().brightWhite().onBlue()); 
+  for (final o in opcoes) {
+    print('  $o'.cyan()); 
+  }
+  print('${'─' * 54}'.brightCyan()); 
+  return lerInt('Escolha uma opção: ', minimo: 0, maximo: opcoes.length - 1); 
+}
+
+int lerInt(String m, {int? minimo, int? maximo}) {
+  while (true) {
+    final valor = lerTexto(m);
+    final numero = int.tryParse(valor);
+    if (numero != null &&
+        (minimo == null || numero >= minimo) &&
+        (maximo == null || numero <= maximo)) {
+      return numero;
+    }
+
+    final intervalo = [
+      if (minimo != null) 'a partir de $minimo',
+      if (maximo != null) 'até $maximo',
+    ].join(' e ');
+    erro(intervalo.isEmpty
+        ? 'Informe um número inteiro válido.'
+        : 'Informe um número inteiro válido $intervalo.');
   }
 }
 
-int lerInt(String mensagem) => int.parse(lerTexto(mensagem));
-String lerTexto(String mensagem) { stdout.write(mensagem); return stdin.readLineSync()!; }
-void voltar() => print('Voltando ao Menu Principal...');
-void dadosInvalidos() => print('Erro: dados inválidos. Verifique as informações digitadas.');
+double lerDouble(String m, {double? minimo, double? maximo}) {
+  while (true) {
+    final valor = lerTexto(m).replaceAll(',', '.');
+    final numero = double.tryParse(valor);
+    if (numero != null && numero.isFinite &&
+        (minimo == null || numero >= minimo) &&
+        (maximo == null || numero <= maximo)) {
+      return numero;
+    }
 
-void imprimirUsuario(Usuario? item) {
-  if (item == null) {
-    print('Usuário não encontrado.');
-  } else {
-    print('ID: ${item.id} | Nome: ${item.nome} | Tipo: ${item.tipo}');
+    erro('Informe um número decimal válido.');
   }
 }
 
-void imprimirLivro(Livro? item) {
-  if (item == null) {
-    print('Livro não encontrado.');
-  } else {
-    print('ID: ${item.id} | Título: ${item.titulo} | Autor: ${item.autor} | Categoria: ${item.categoria}');
+String lerTexto(String m) { 
+  stdout.write(m.brightYellow()); 
+  final v = stdin.readLineSync()?.trim(); 
+  if (v == null || v.isEmpty) {
+    throw const FormatException('Entrada obrigatória.'); 
+  }
+  return v; 
+} 
+
+bool lerSimNao(String m) {
+  while (true) {
+    final valor = lerTexto('$m (s/n): ').toLowerCase();
+    if (valor == 's' || valor == 'sim') return true;
+    if (valor == 'n' || valor == 'nao' || valor == 'não') return false;
+    erro('Responda apenas com s ou n.');
   }
 }
 
-void imprimirExemplar(Exemplar? item) {
-  if (item == null) {
-    print('Exemplar não encontrado.');
+String lerTipoUsuario() { 
+  final o = menu('TIPO DE VÍNCULO', ['1. Aluno', '2. Professor', '3. Comunidade']); 
+  if (o == 1) return 'Aluno'; 
+  if (o == 2) return 'Professor'; 
+  if (o == 3) return 'Comunidade'; 
+  throw const FormatException('Tipo inválido.'); 
+} 
+
+String? escolherOcorrencia() { 
+  final o = menu('ESTADO DO EXEMPLAR', ['1. Em bom estado', '2. Danificado', '3. Perdido']); 
+  if (o == 1) return null; 
+  if (o == 2) return 'Danificado'; 
+  if (o == 3) return 'Perdido'; 
+  throw const FormatException('Opção inválida.'); 
+}
+
+Livro lerLivro([String m = 'ID do título: ']) {
+  return Livro(
+    lerInt(m), 
+    lerTexto('Título: '), 
+    lerTexto('Autor: '), 
+    lerTexto('Categoria: '), 
+    lerTexto('Natureza (Livro, Periódico ou Referência): ')
+  ); 
+}
+
+Exemplar lerExemplar() => Exemplar(lerInt('ID do exemplar: '), lerInt('ID do título: '), true); 
+
+String formatarData(DateTime d) => '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+
+void sucesso(String t) => print('✓ $t'.brightGreen()); 
+void aviso(String t) => print('! $t'.brightYellow()); 
+void erro(String t) => print('✗ $t'.brightRed()); 
+
+void imprimirUsuario(Usuario? i) {
+  if (i == null) {
+    erro('Usuário não encontrado.');
   } else {
-    print('ID: ${item.id} | Livro ID: ${item.livroId} | Disponível: ${item.disponivel}');
+    print('ID: ${i.id} | ${i.nome} | ${i.tipo} | ${i.bloqueado ? 'BLOQUEADO — R\$ ${i.pendenciaFinanceira.toStringAsFixed(2)}' : 'Regular'}');
   }
 }
 
-void imprimirEmprestimo(Emprestimo? item) {
-  if (item == null) {
-    print('Empréstimo não encontrado.');
+void imprimirLivro(Livro? i) {
+  if (i == null) {
+    erro('Título não encontrado.');
   } else {
-    print('ID: ${item.id} | Usuário ID: ${item.usuarioId} | Exemplar ID: ${item.exemplarId} | Data Empréstimo: ${item.dataEmprestimo} | Data Devolução: ${item.dataDevolucao}');
+    print('ID: ${i.id} | ${i.titulo} | ${i.autor} | ${i.categoria} | Natureza: ${i.natureza}');
   }
 }
 
-void imprimirReserva(Reserva? item) {
-  if (item == null) {
-    print('Reserva não encontrada.');
+void imprimirExemplar(Exemplar? i) {
+  if (i == null) {
+    erro('Exemplar não encontrado.');
   } else {
-    print('ID: ${item.id} | Usuário ID: ${item.usuarioId} | Livro ID: ${item.livroId} | Data da Reserva: ${item.dataReserva}');
+    print('ID: ${i.id} | Título: ${i.livroId} | ${i.disponivel ? 'Disponível' : 'Indisponível'}');
+  }
+}
+
+void imprimirEmprestimo(Emprestimo i) {
+  print('ID: ${i.id} | Usuário: ${i.usuarioId} | Exemplar: ${i.exemplarId} | Previsto: ${formatarData(i.dataPrevistaDevolucao)} | ${i.ativo ? 'ATIVO' : 'Devolvido'} | Multa: R\$ ${i.multa.toStringAsFixed(2)} | Ressarcimento: R\$ ${i.ressarcimento.toStringAsFixed(2)}');
+}
+
+void imprimirReserva(Reserva? i) {
+  if (i == null) {
+    erro('Reserva não encontrada.');
+  } else {
+    print('ID: ${i.id} | Usuário: ${i.usuarioId} | Título: ${i.livroId} | ${formatarData(i.dataReserva)}');
   }
 }

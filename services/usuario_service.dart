@@ -12,9 +12,27 @@ class UsuarioService{
   Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, usuarios);
 
   Future<void> adicionarUsuario(Usuario usuario) async {
+    if (buscarPorId(usuario.id) != null) throw StateError('Já existe usuário com este ID.');
     usuarios.add(usuario);
     await salvarDados();
     print("Usuário ${usuario.nome} adicionado com sucesso!");
+  }
+
+  Future<void> registrarPendencia(int usuarioId, double valor) async {
+    final usuario = buscarPorId(usuarioId);
+    if (usuario == null) throw StateError('Usuário não encontrado.');
+    usuario.pendenciaFinanceira += valor;
+    await salvarDados();
+  }
+
+  Future<void> quitarPendencia(int usuarioId, double valor) async {
+    final usuario = buscarPorId(usuarioId);
+    if (usuario == null) throw StateError('Usuário não encontrado.');
+    if (valor <= 0 || valor > usuario.pendenciaFinanceira) {
+      throw StateError('Informe um valor entre 0 e R\$ ${usuario.pendenciaFinanceira.toStringAsFixed(2)}.');
+    }
+    usuario.pendenciaFinanceira = (usuario.pendenciaFinanceira - valor).clamp(0, double.infinity).toDouble();
+    await salvarDados();
   }
 
   void ListarUsuarios(){

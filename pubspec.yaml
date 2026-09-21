@@ -1,0 +1,7 @@
+name: sistema_biblioteca
+description: Sistema de gerenciamento de biblioteca em terminal.
+environment:
+  sdk: '>=2.18.0 <4.0.0'
+
+dependencies:
+  tint: ^2.0.1

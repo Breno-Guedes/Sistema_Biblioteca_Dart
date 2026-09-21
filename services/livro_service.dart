@@ -12,6 +12,7 @@ class LivroService{
   Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, livros);
 
   Future<void> adicionarLivro(Livro livro) async {
+    if (buscarPorId(livro.id) != null) throw StateError('Já existe livro com este ID.');
     livros.add(livro);
     await salvarDados();
     print("Livro ${livro.titulo} adicionado com sucesso!");
@@ -42,7 +43,7 @@ class LivroService{
     return null;
   }
 
-  Future<void> alterarLivro(int id, String titulo, String autor, String categoria) async {
+  Future<void> alterarLivro(int id, String titulo, String autor, String categoria, String natureza) async {
     Livro? livro = buscarPorId(id);
 
     if(livro == null){
@@ -51,6 +52,7 @@ class LivroService{
       livro.titulo = titulo;
       livro.autor = autor;
       livro.categoria = categoria;
+      livro.natureza = natureza;
       await salvarDados();
       print("Livro com ID $id alterado com sucesso!");
     }
