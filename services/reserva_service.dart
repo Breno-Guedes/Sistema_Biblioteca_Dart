@@ -12,6 +12,7 @@ class ReservaService{
   Future<void> salvarDados() => StorageService.salvarDados(_caminhoDados, reservas);
 
   Future<void> adicionarReserva(Reserva reserva) async {
+    if (buscarPorId(reserva.id) != null) throw StateError('Já existe reserva com este ID.');
     reservas.add(reserva);
     await salvarDados();
     print("Reserva com ID ${reserva.id} adicionada com sucesso!");
