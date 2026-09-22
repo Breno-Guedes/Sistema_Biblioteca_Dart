@@ -376,7 +376,7 @@ int menu(String t, List<String> opcoes) {
     print('  $o'.cyan()); 
   }
   print('${'─' * 54}'.brightCyan()); 
-  return lerInt('Escolha uma opção: ', minimo: 1, maximo: opcoes.length); 
+  return lerInt('Escolha uma opção: ', minimo: 0, maximo: opcoes.length - 1); 
 }
 
 int lerInt(String m, {int? minimo, int? maximo}) {
