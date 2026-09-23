@@ -62,7 +62,6 @@ A estrutura do projeto está organizada da seguinte forma:
 
 ```text
 Sistema_Biblioteca_Dart/
-├── .dart_tool/
 ├── dados/
 │   ├── emprestimos.json
 │   ├── exemplares.json
@@ -126,8 +125,13 @@ dart --version
 ```bash
 cd Sistema_Biblioteca_Dart
 ```
+3. Instale as dependências do projeto:
 
-3. Execute a aplicação com o comando:
+```bash
+dart pub get
+```
+
+4. Execute a aplicação com o comando:
 
 ```bash
 dart run main.dart
