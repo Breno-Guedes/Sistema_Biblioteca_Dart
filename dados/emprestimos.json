@@ -1,1 +1,57 @@
-[]
+[
+  {
+    "id": 2001,
+    "usuarioId": 1,
+    "exemplarId": 1002,
+    "dataEmprestimo": "2026-09-28T10:00:00.000Z",
+    "dataPrevistaDevolucao": "2026-10-12T10:00:00.000Z",
+    "dataDevolucao": null,
+    "multa": 0.0,
+    "ressarcimento": 0.0,
+    "ocorrencia": null
+  },
+  {
+    "id": 2002,
+    "usuarioId": 2,
+    "exemplarId": 1003,
+    "dataEmprestimo": "2026-09-01T10:00:00.000Z",
+    "dataPrevistaDevolucao": "2026-09-04T10:00:00.000Z",
+    "dataDevolucao": null,
+    "multa": 0.0,
+    "ressarcimento": 0.0,
+    "ocorrencia": null
+  },
+  {
+    "id": 2003,
+    "usuarioId": 3,
+    "exemplarId": 1005,
+    "dataEmprestimo": "2026-09-10T10:00:00.000Z",
+    "dataPrevistaDevolucao": "2026-09-11T10:00:00.000Z",
+    "dataDevolucao": "2026-09-12T10:00:00.000Z",
+    "multa": 3.0,
+    "ressarcimento": 80.0,
+    "ocorrencia": "Danificado"
+  },
+  {
+    "id": 2004,
+    "usuarioId": 4,
+    "exemplarId": 1001,
+    "dataEmprestimo": "2026-09-01T10:00:00.000Z",
+    "dataPrevistaDevolucao": "2026-09-14T10:00:00.000Z",
+    "dataDevolucao": "2026-09-13T10:00:00.000Z",
+    "multa": 0.0,
+    "ressarcimento": 0.0,
+    "ocorrencia": null
+  },
+  {
+    "id": 2005,
+    "usuarioId": 1,
+    "exemplarId": 1001,
+    "dataEmprestimo": "2026-09-29T14:04:13.814325",
+    "dataPrevistaDevolucao": "2026-10-13T14:04:13.814325",
+    "dataDevolucao": null,
+    "multa": 0.0,
+    "ressarcimento": 0.0,
+    "ocorrencia": null
+  }
+]

@@ -1,1 +1,32 @@
-[]
+[
+  {
+    "id": 1001,
+    "livroId": 101,
+    "disponivel": false
+  },
+  {
+    "id": 1002,
+    "livroId": 101,
+    "disponivel": false
+  },
+  {
+    "id": 1003,
+    "livroId": 102,
+    "disponivel": false
+  },
+  {
+    "id": 1004,
+    "livroId": 103,
+    "disponivel": true
+  },
+  {
+    "id": 1005,
+    "livroId": 104,
+    "disponivel": false
+  },
+  {
+    "id": 1006,
+    "livroId": 104,
+    "disponivel": true
+  }
+]

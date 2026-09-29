@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "id": 101,
+    "titulo": "Dart em Prática",
+    "autor": "Marcos Ribeiro",
+    "categoria": "Programação",
+    "natureza": "Livro"
+  },
+  {
+    "id": 102,
+    "titulo": "Revista de Tecnologia - Edição 42",
+    "autor": "Editora Tech",
+    "categoria": "Tecnologia",
+    "natureza": "Periódico"
+  },
+  {
+    "id": 103,
+    "titulo": "Enciclopédia do Conhecimento",
+    "autor": "Biblioteca Nacional",
+    "categoria": "Referência",
+    "natureza": "Referência"
+  },
+  {
+    "id": 104,
+    "titulo": "Banco de Dados para Iniciantes",
+    "autor": "Fernanda Lima",
+    "categoria": "Computação",
+    "natureza": "Livro"
+  }
+]

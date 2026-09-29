@@ -1,1 +1,14 @@
-[]
+[
+  {
+    "id": 3001,
+    "usuarioId": 1,
+    "livroId": 102,
+    "dataReserva": "2026-09-29T10:00:00.000Z"
+  },
+  {
+    "id": 3002,
+    "usuarioId": 4,
+    "livroId": 104,
+    "dataReserva": "2026-09-29T11:00:00.000Z"
+  }
+]
